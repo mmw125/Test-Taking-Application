@@ -9,19 +9,18 @@ import javax.swing.JPanel;
 
 import utilities.Constants;
 
-
-public class LoginBackground extends JPanel 
-{
-	/**
-	 * 
-	 */
+/**
+ * Draws the background image on the login window
+ * @author Andrew Storms
+ */
+public class LoginBackground extends JPanel {
 	private static final long serialVersionUID = 1L;
 	Image background;
 	
 	public LoginBackground(LoginFrame lf)
 	{
 		Toolkit kit = Toolkit.getDefaultToolkit();
-		background = kit.getImage(Constants.LOGIN_BACKGROUND);
+		background = kit.getImage(Constants.LOGIN_BACKGROUND_PATH);
 	}
 	
 	public void paintComponent(Graphics g)

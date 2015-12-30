@@ -4,7 +4,6 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.Font;
 import java.io.IOException;
 import java.util.Map;
 
@@ -25,6 +24,10 @@ import utilities.Constants;
 import ftp.DataHolder.Student;
 import ftp.FTPConnection;
 
+/**
+ * Allows you to select what test you want to take o
+ * @author Mark Wiggans
+ */
 public class TestSelector extends JPanel{
 	private static final long serialVersionUID = -4675444471114154077L;
 	private JTree tree;
@@ -34,6 +37,11 @@ public class TestSelector extends JPanel{
 	private JLabel pathLabel;
 	private Map<String, Boolean> imageLookup;
 	
+	/**
+	 * Creates a new text selector
+	 * @param ftp 
+	 * @param username the user name of the person using the program
+	 */
 	public TestSelector(FTPConnection ftp, String username) {
 		ftpClient = ftp;
 		imageLookup = ftp.getMap();
@@ -41,6 +49,9 @@ public class TestSelector extends JPanel{
 		this.init();
 	}
 
+	/**
+	 * Creates all of the display components
+	 */
 	private void init() {
 		setLayout(new BorderLayout());
 		tree = new JTree(ftpClient.getCachedTree());
@@ -70,7 +81,6 @@ public class TestSelector extends JPanel{
 		northContainer.add(Box.createHorizontalStrut(15), BorderLayout.EAST);
 		
 		RoundedPanel pathLabelContainer = new RoundedPanel();
-//		JPanel pathLabelContainer = new JPanel();
 		pathLabelContainer.setPreferredSize(new Dimension(250, 30));
 		pathLabelContainer.setBackground(Colors.MINOR_BAR_BACKGROUND);
 		pathLabelContainer.setLayout(new BorderLayout());
@@ -80,10 +90,12 @@ public class TestSelector extends JPanel{
 		add(northContainer, BorderLayout.NORTH);
 	}
 	
+	/**
+	 * Renders the cell
+	 * @author Mark Wiggans
+	 */
 	private class CellRenderer extends DefaultTreeCellRenderer{
-		/**
-		 * 
-		 */
+		
 		private static final long serialVersionUID = 1L;
 
 		@Override
@@ -99,12 +111,11 @@ public class TestSelector extends JPanel{
 	    @Override
 	    public Color getBackgroundSelectionColor() {
 	    	return Colors.QUESTION_SELECTED;
-	        //return Colors.SELECTED;
 	    }
 
 	    @Override
 	    public Color getBackground() {
-	        return (null);
+	        return null;
 	    }
 
 	    @Override
@@ -115,64 +126,61 @@ public class TestSelector extends JPanel{
 	        if(MainWindow.isTeacher){
 		        if (tree.getModel().getRoot().equals(nodo)) {
 		        	setIcon(null);
-		        	this.setFont(new Font(Font.DIALOG, Font.PLAIN, 24));
+		        	this.setFont(Constants.TREE_ROOT_FONT);
 		        } else if (nodo.getParent().equals(tree.getModel().getRoot())) {
-		        	ImageIcon ic = new ImageIcon("pics/folderIcon.png", "a folder");
+		        	ImageIcon ic = new ImageIcon(Constants.FOLDER_ICON_PATH);
 	        		setIcon(ic);
-		        	this.setFont(new Font(Font.DIALOG, Font.PLAIN, 24));
+		        	this.setFont(Constants.TREE_FOLDER_FONT);
 		        } else {
 		        	setIcon(null);
-		        	this.setFont(new Font(Font.DIALOG, Font.PLAIN, 21));
+		        	this.setFont(Constants.TREE_ITEM_FONT);
 		        }
 	        }else{
 	        	//If node is the root
 		        if (tree.getModel().getRoot().equals(nodo)) {
 		        	setIcon(null);
-		        	this.setFont(new Font(Font.DIALOG, Font.PLAIN, 24));
+		        	this.setFont(Constants.TREE_ROOT_FONT);
 		        //If the node's parent is the root
 		        } else if (nodo.getParent().equals(tree.getModel().getRoot())) {
-		        	ImageIcon ic = new ImageIcon("pics/folderIcon.png", "a folder");
+		        	ImageIcon ic = new ImageIcon(Constants.FOLDER_ICON_PATH);
 	        		setIcon(ic);
-		        	this.setFont(new Font(Font.DIALOG, Font.PLAIN, 24));
+		        	this.setFont(Constants.TREE_FOLDER_FONT);
 		        //If it is not the root or a direct descendant
 		        } else {
-//		        	String[] split = nodo.getParent().toString().split(" ");
-//					String pathString = split[0] + "/";
-//					pathString += nodo.getParent().toString().substring(split[0].length() + 1);
-//					pathString += "/";
-//					System.out.println(pathString+nodo.toString());
-//					System.out.println("Looking here for an image: "+imageLookup.get(pathString+nodo.toString()));
 		        	ImageIcon ic = null;
-		        	//if(imageLookup.get(FTPConnection.holder.fwpathString+nodo.toString())){
 		        	try{
 			        	if(imageLookup.get(ftpClient.getDataHolder().getTeacherNameFromClassName(nodo.getParent().toString(), username)+"/"+nodo.getParent()+"/"+nodo)){
-			        		ic = new ImageIcon("pics/complete24.png", "Check Mark");
+			        		ic = new ImageIcon(Constants.COMPLETE_PATH);
 			        	}else{
-			        		ic = new ImageIcon("pics/incomplete24.png", "Circle");
+			        		ic = new ImageIcon(Constants.INCOMPLETE_PATH);
 			        	}
 		        	}catch(Exception e){
 		        		e.printStackTrace();
 		        	}
 		        	
 		        	setIcon(ic);
-		        	
-		        	this.setFont(new Font(Font.DIALOG, Font.PLAIN, 21));
+		        	this.setFont(Constants.TREE_ITEM_FONT);
 		        }
 	        }
 	        
-	        
-	        
 	        this.setBorder(BorderFactory.createEmptyBorder());
-	        this.setFont(new Font(Font.DIALOG, Font.PLAIN, 21));
 	        this.setForeground(Colors.PANEL_TEXT_FOREGROUND);
 	        return ret;
 	    }
 	}
 
+	/**
+	 * Repaints the tree
+	 * @throws IOException
+	 */
 	public void setHierarchy() throws IOException {
 		tree.repaint();
 	}
 
+	/**
+	 * 
+	 * @throws IOException
+	 */
 	public void refreshTree() throws IOException {
 		ftpClient.cacheHeirarchy(username + "/", username);
 		tree = new JTree(ftpClient.getCachedTree());
@@ -183,6 +191,10 @@ public class TestSelector extends JPanel{
 		questionSelectorPane.setViewportView(tree);
 	}
 	
+	/**
+	 * Refreshes the student's tree by going to the server and getting all the data again
+	 * @throws IOException
+	 */
 	public void refreshStudentTree() throws IOException {
 		Student student = ftpClient.getDataHolder().getStudentFromUsername(username);
 		ftpClient.cacheStudentTree(username, student.getFirstName()+" "+student.getLastName());
@@ -194,41 +206,46 @@ public class TestSelector extends JPanel{
 		questionSelectorPane.setViewportView(tree);
 	}
 
+	/**
+	 * Checks if the given path is to a test
+	 * @param path the path to check
+	 * @return true if to a test, false if not
+	 */
 	public boolean isTest(TreePath path) {
 		if(path != null){
 			return path.getPathCount() == 3;
 		}
 		return false;
 	}
-
-	public boolean isClass(TreePath pathIn) {
-		if (pathIn != null && pathIn.getPathCount() == 2) {
-			return true;
-		} else {
-			return false;
-		}
-	}
-
-	public boolean isRoot(TreePath path) {
-		if (path != null){
-			return path.getPathCount() == 1;
-		}else{
-			return false;
-		}
-	}
 	
+	/**
+	 * Sets which element is selected
+	 * @param path path to the element to be selected
+	 */
 	public void setTreeSelection(TreePath path) {
 		tree.setSelectionPath(path);
 	}
 
+	/**
+	 * Gets the path to the selected item in the tree
+	 * @return the path
+	 */
 	public TreePath getTreePath() {
 		return tree.getSelectionPath();
 	}
 	
+	/**
+	 * Gets the underlying tree
+	 * @return the tree
+	 */
 	public JTree getTree(){
 		return tree;
 	}
 	
+	/**
+	 * Sets the text in the label above the tree
+	 * @param text string to put in the label
+	 */
 	public void setPathLabel(String text){
 		pathLabel.setText(text);
 	}

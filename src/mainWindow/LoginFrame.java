@@ -6,18 +6,21 @@ import java.awt.Container;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 
-
-public class LoginFrame extends JFrame 
-{
-	/**
-	 * 
-	 */
+/**
+ * Holds the LoginWindow
+ * @author Andrew Storms
+ */
+public class LoginFrame extends JFrame {
 	private static final long serialVersionUID = 1L;
 
 	Login loginPanel;
 	
 	LoginBackground bg;
 	
+	/**
+	 * Creates a new Frame with the given title
+	 * @param title name for the frame
+	 */
 	public LoginFrame(String title){
 		super(title);
 		int windowWidth = 850;

@@ -40,7 +40,7 @@ public class RoundedPanel extends JPanel {
         int height = getHeight();
         int shadowGap = this.shadowGap;
         Color shadowColorA = new Color(shadowColor.getRed(), 
-	shadowColor.getGreen(), shadowColor.getBlue(), shadowAlpha);
+        		shadowColor.getGreen(), shadowColor.getBlue(), shadowAlpha);
         Graphics2D graphics = (Graphics2D) g;
 
         //Sets antialiasing if HQ.
@@ -62,8 +62,6 @@ public class RoundedPanel extends JPanel {
             shadowGap = 1;
         }
         
-        
-
         //Draws the rounded opaque panel with borders.
         graphics.setColor(getBackground());
         graphics.fillRoundRect(0, 0, width, 

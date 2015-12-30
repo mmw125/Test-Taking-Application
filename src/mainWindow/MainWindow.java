@@ -46,9 +46,16 @@ import utilities.TeacherConverters;
 import ftp.FTPConnection;
 import ftp.DataHolder.Student;
 
-public class MainWindow extends JPanel implements TestHolderHolder{
-
+/**
+ * The main window to display
+ * @author Mark Wiggans
+ */
+public class MainWindow /* aka TestHolderHolderHolder */ extends JPanel implements TestHolderHolder{
+	/**
+	 * Keeps track if the current user is a teacher
+	 */
 	public static boolean isTeacher;
+	
 	private static final long serialVersionUID = 1L;
 	private FTPConnection ftpClient;
 	private JFrame frame;
@@ -75,32 +82,32 @@ public class MainWindow extends JPanel implements TestHolderHolder{
 	}
 
 	public void windowClosingEvent(){
-		if(MainWindow.isTeacher){
+		if(MainWindow.isTeacher) {
 			if (JOptionPane.showConfirmDialog(frame,
 					"Are you sure you want to close the program?", "Confirm Exit",
 					JOptionPane.YES_NO_OPTION,
 					JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION) {
-		if(holder != null && holder.getSelector().anyChanges()){
+		if(holder != null && holder.getSelector().anyChanges()) {
 			int output = JOptionPane.showConfirmDialog(frame,
 					"You have unsaved changes. Would you like to save them?", "Save changes?",
 					JOptionPane.YES_NO_OPTION,
 					JOptionPane.QUESTION_MESSAGE);
-			if(output == JOptionPane.YES_OPTION){
+			if(output == JOptionPane.YES_OPTION) {
 				try {
 					saveTest(false);
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
 				System.exit(0);
-			}else if(output == JOptionPane.NO_OPTION){
+			} else if(output == JOptionPane.NO_OPTION) {
 				System.exit(0);
 			}
-		}else{
+		} else {
 			System.exit(0);
 		}
 	}
-		}else{ //if student
-			if(inAssignment){
+		} else { //if student
+			if(inAssignment) {
 				JOptionPane.showMessageDialog(frame, "You mush finish and submit the assignment before closing the program.");
 				
 			}else if (JOptionPane
@@ -113,9 +120,11 @@ public class MainWindow extends JPanel implements TestHolderHolder{
 		}
 	}
 	
+	/**
+	 * Initializes the window
+	 */
 	private void init() {
 		frame = new JFrame();
-		System.out.println("Created Main Window");
 		ImageIcon icon = new ImageIcon(Constants.LOGO_PATH);
 		frame.setIconImage(icon.getImage());
 		frame.setMinimumSize(new Dimension(1200, 680));
@@ -156,23 +165,20 @@ public class MainWindow extends JPanel implements TestHolderHolder{
 		selector = new TestSelector(ftpClient, username);
 		add(selector, BorderLayout.WEST);
 		addTreeSelectionListener(selector.getTree());
-
 	}
 
 	public void submitTest(boolean checkForPossibleMistakes) throws IOException {
 		setCursor (Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-		File output = new File("output.txt");
+		File output = new File(Constants.TEMP_DIRECTORY + "output.txt");
 		output.createNewFile();
 		PrintWriter pw = new PrintWriter(output);
 		boolean problem = false;
 		for (Question question : holder.getSelector().getQuestions()) {
-			if (question.getAnswerChoice() == -1 && !problem && checkForPossibleMistakes) {
+			if (question.getAnswerChoice() == null && !problem && checkForPossibleMistakes) {
 				JOptionPane.showMessageDialog(frame, "Please select an answer for Question "+ question.getQuestionNumber());
 				problem = true;
 			}
 			pw.println(question.getQuestionNumber() + " "
-					+ question.getAnswerChoice());
-			System.out.println(question.getQuestionNumber() + " "
 					+ question.getAnswerChoice());
 		}
 		pw.close();
@@ -182,6 +188,7 @@ public class MainWindow extends JPanel implements TestHolderHolder{
 			gradeTest();
 		}
 		setCursor (Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+		output.delete();
 	}
 	
 	public void gradeTest() {
@@ -190,18 +197,15 @@ public class MainWindow extends JPanel implements TestHolderHolder{
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		double numberOfQuestions = holder.getSelector().getQuestions().size();
-		double correctAnswers = 0;
+		double pointsGot = 0;
+		double pointsOutOf = 0;
 		for (Question question : holder.getSelector().getQuestions()) {
 			question.setEditable(false, false);
-			if (question.isCorrect()) {
-				correctAnswers++;
-			}
+			pointsGot += question.pointsRecieved();
+			pointsOutOf += question.getPointsOutOf();
 		}
-		double grade = correctAnswers * 100.0f / numberOfQuestions;
-		String text = (int) correctAnswers + "/" + (int) numberOfQuestions
-				+ " | " + (int) grade + "%";
-		// frame.setTitle(text);
+		double grade = pointsGot * 100.0f / pointsOutOf;
+		String text = (int) pointsGot + "/" + (int) pointsOutOf + " | " + (int) grade + "%";
 		menuBar.setWhiteSpaceText(" Grade: " + text);
 		menuBar.stopAllowingSubmissions();
 		if(inAssignment){
@@ -216,11 +220,8 @@ public class MainWindow extends JPanel implements TestHolderHolder{
 		inAssignment = false;
 	}
 	
-	
-	
 	public void selectTest(TreePath path, boolean takenBefore)
 			throws IOException {
-		System.out.println("Method selected");
 		currentTestPath = path;
 		Object[] splitPath = currentTestPath.getPath();
 		
@@ -279,11 +280,10 @@ public class MainWindow extends JPanel implements TestHolderHolder{
 			if (selector.isTest(e.getNewLeadSelectionPath())) {
 				// If student has already taken test
 				if (inAssignment) {
-					if(ableToOpenOtherAssignments && ftpClient.getMap().get(
-							StudentConverters.treePathToMap(e.getNewLeadSelectionPath(), username, ftpClient.getDataHolder()))){
+					if(ableToOpenOtherAssignments && ftpClient.getMap().get(StudentConverters.treePathToMap(e.getNewLeadSelectionPath(), username, ftpClient.getDataHolder()))){
+
 						PopupWindow win = new PopupWindow();
 						TestHolder hol = new TestHolder(win, ftpClient);
-						win.setPanel(hol);
 						try {
 							hol.importTest(e.getNewLeadSelectionPath(), ftpClient, username);
 							hol.importSubmission(e.getNewLeadSelectionPath(), ftpClient, username);
@@ -291,6 +291,7 @@ public class MainWindow extends JPanel implements TestHolderHolder{
 						} catch (IOException e1) {
 							e1.printStackTrace();
 						}
+						win.setHolder(hol);
 					}else{
 						JOptionPane.showMessageDialog(frame, "You must finish and submit the current assingment before switching assingments.");
 					}
@@ -302,7 +303,6 @@ public class MainWindow extends JPanel implements TestHolderHolder{
 							e1.printStackTrace();
 						}
 					} else {
-
 						if (JOptionPane.showConfirmDialog(frame,
 										"Are you sure you want to begin this assingment?",
 										"Confirm",
@@ -318,26 +318,23 @@ public class MainWindow extends JPanel implements TestHolderHolder{
 				}
 			}
 		}
-//		// Don't really have any reason for these to be here
-//		// Am leaving in just in case
-//		if (selector.isClass(e.getNewLeadSelectionPath())) {
-//
-//		}
-//		if (selector.isRoot(e.getNewLeadSelectionPath())) {
-//
-//		}
 	}
 	
 	public void addTreeSelectionListener(JTree treeIn) {
-		treeIn.getSelectionModel().addTreeSelectionListener(
-				new TreeSelectionListener() {
-					public void valueChanged(TreeSelectionEvent e) {
-						treeSelected(e);
-					}
-			});
+		treeIn.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
+				public void valueChanged(TreeSelectionEvent e) {
+					treeSelected(e);
+				}
+		});
 	}
 
-	public void saveTest(boolean submitting) throws IOException {
+	/**
+	 * Saves the current test onto the server
+	 * @param publishing if the test is being published to the server 
+	 * @throws IOException if there is a problem either writing to 
+	 * a file on the local computer or the server
+	 */
+	public void saveTest(boolean publishing) throws IOException {
 		if(ftpClient.isConnected()){
 			File file = new File("export.tst");
 			if (file.exists()) {
@@ -345,32 +342,28 @@ public class MainWindow extends JPanel implements TestHolderHolder{
 			}
 			boolean completedSuccessfully = true;
 			PrintWriter pw = new PrintWriter(file);
-			if(holder.getSelector().getQuestions().size() == 0 && submitting){
-				JOptionPane.showMessageDialog(null, "Please add questions before saving", "Warning", JOptionPane.ERROR_MESSAGE);
+			if(holder.getSelector().getQuestions().size() == 0 && publishing){
+				JOptionPane.showMessageDialog(null, "Please add questions before publishing", "Warning", JOptionPane.ERROR_MESSAGE);
 				completedSuccessfully = false;
 			}
 			
 			pw.println("TIMELIMIT:" + menuBar.getTimeLimit()+"");
-			System.out.println(menuBar.getTimeLimit());
 			if(menuBar.ableToOpenOtherAssignments()){
 				pw.println("ABLETOOPENOTHER:TRUE");
-				System.out.println("ABLETOOPENOTHER:TRUE");
-			}else{
+			} else {
 				pw.println("ABLETOOPENOTHER:FALSE");
-				System.out.println("ABLETOOPENOTHER:FALSE");
 			}
-			
 			
 			for (Question question : holder.getSelector().getQuestions()) {
 				ArrayList<String> answerChoices = question.getAnswerChoices();
-				if(submitting && (question.getQuestionText().equals("")||question.getQuestionText().equals("Enter a question here...."))){
+				if(publishing && (question.getQuestionText().equals("")||question.getQuestionText().equals("Enter a question here...."))){
 					JOptionPane.showMessageDialog(null, "Please enter a question for question "+question.getQuestionNumber(), "Warning", JOptionPane.ERROR_MESSAGE);
 					completedSuccessfully = false;
 				}
 				pw.print("MUL:" + question.getQuestionText() + ": ");
 				for (int i = 0; i < answerChoices.size(); i++) {
 					if (i == answerChoices.size() - 1) {
-						if(submitting && answerChoices.get(i).equals("")){
+						if(publishing && answerChoices.get(i).equals("")) {
 							if(completedSuccessfully){
 								int number = i + 1;
 								JOptionPane.showMessageDialog(null, "Please fill out answer choice "+number+" in question "+question.getQuestionNumber(), "Warning", JOptionPane.ERROR_MESSAGE);
@@ -380,7 +373,7 @@ public class MainWindow extends JPanel implements TestHolderHolder{
 							pw.println(answerChoices.get(i));
 						}
 					} else {
-						if(submitting && answerChoices.get(i).equals("")){
+						if(publishing && answerChoices.get(i).equals("")) {
 							if(completedSuccessfully){
 								int number = i + 1;
 								JOptionPane.showMessageDialog(null, "Please fill out answer choice "+number+" in question "+question.getQuestionNumber(), "Warning", JOptionPane.ERROR_MESSAGE);
@@ -398,7 +391,7 @@ public class MainWindow extends JPanel implements TestHolderHolder{
 			key.createNewFile();
 			PrintWriter printWriter = new PrintWriter(key);
 			for (Question question : holder.getSelector().getQuestions()) {
-				if (question.getAnswerChoice() < 0  && submitting && completedSuccessfully) {
+				if (question.getAnswerChoice() == null  && publishing && completedSuccessfully) {
 					completedSuccessfully = false;
 					JOptionPane.showMessageDialog(null, "Please add questions before saving", "Warning", JOptionPane.ERROR_MESSAGE);
 
@@ -408,7 +401,7 @@ public class MainWindow extends JPanel implements TestHolderHolder{
 			}
 			printWriter.close();
 			if (completedSuccessfully){
-				if(submitting){
+				if(publishing){
 					ftpClient.uploadFile(TeacherConverters.treePathToKeyPath(currentTestPath, username), new FileInputStream(key));
 					ftpClient.uploadFile(TeacherConverters.treePathToTempKeyPath(currentTestPath, username), new FileInputStream(key));
 					ftpClient.uploadFile(TeacherConverters.treePathToTestPath(currentTestPath, username), new FileInputStream(file));
@@ -420,21 +413,12 @@ public class MainWindow extends JPanel implements TestHolderHolder{
 				}
 				holder.getSelector().saved();
 			}
-
 			file.delete();
 			key.delete();
 		}else{
-			JOptionPane.showMessageDialog(null, "Could not connect to the server");
+			JOptionPane.showMessageDialog(null, "Please connect to the server before trying to submit");
 		}
 	}
-	
-//	public static JMenu defaultJMenu(String name){
-//		JMenu output = new JMenu(name);
-//		output.setBackground(null);
-//		output.setFont(Constants.JMENUBAR_FONT);
-//		output.setForeground(Colors.MAJOR_BAR_TEXT);
-//		return output;
-//	}
 	
 	public static JMenuItem defaultJMenuItem(String name){
 		JMenuItem output = new JMenuItem(name);
@@ -488,19 +472,16 @@ public class MainWindow extends JPanel implements TestHolderHolder{
 		}
 	}
 
+	/**
+	 * 
+	 * @author Mark Wiggans
+	 */
 	public class MenuBar {
 		private JMenuItem save;
 		private JMenuBar jMenuBar;
 		private boolean alreadyAdded;
-		private JMenu file;
-		private JMenuItem grade;
-		private JMenuItem cut;
-		private JMenuItem copy;
-		private JMenuItem paste;
-		private JMenuItem delete;
-		private JMenuItem publish;
-		private JMenu view;
-		private JMenu options;
+		private JMenu file, view, options;
+		private JMenuItem grade, cut, copy, paste, delete, publish;
 		private JCheckBoxMenuItem ableToOpenOtherAssignments;
 		private JLabel connectionStatus;
 		private JMenuItem deleteAssignment;
@@ -516,13 +497,12 @@ public class MainWindow extends JPanel implements TestHolderHolder{
 			if(MainWindow.isTeacher){
 				jMenuBar = new JMenuBar();
 				jMenuBar.setPreferredSize(new Dimension(1, 50));
-				jMenuBar.setBackground(Colors.MAJOR_BAR_BACKGROUND);
 				jMenuBar.setBorder(BorderFactory.createEmptyBorder());
 				alreadyAdded = false;
 				this.addFileMenu();
 				this.addEditMenu();
 				this.addNewMenu();
-				this.addViewMenu();
+				//this.addViewMenu();
 				this.addTestOptionMenu();
 				jMenuBar.add(Box.createGlue());
 			}else{
@@ -532,7 +512,7 @@ public class MainWindow extends JPanel implements TestHolderHolder{
 				jMenuBar.setPreferredSize(new Dimension(100, 50));
 				JMenu file = new JMenu(" File ");
 				file.setBackground(null);
-				file.setForeground(Colors.MAJOR_BAR_TEXT);
+				file.setForeground(Colors.MAJOR_BAR_FOREGROUND);
 				file.setFont(Constants.JMENUBAR_FONT);
 				this.jMenuBar.add(file);
 				
@@ -562,24 +542,8 @@ public class MainWindow extends JPanel implements TestHolderHolder{
 				JMenu view = new JMenu(" View ");
 				jMenuBar.add(view);
 				view.setBackground(null);
-				view.setForeground(Colors.MAJOR_BAR_TEXT);
+				view.setForeground(Colors.MAJOR_BAR_FOREGROUND);
 				view.setFont(Constants.JMENUBAR_FONT);
-				JMenu setTextSize = new JMenu("Set Text Size");
-				view.add(setTextSize);
-
-				for (int i = 8; i <= 46; i += 2) {
-					JMenuItem setSize = new JMenuItem(i + "");
-					setTextSize.add(setSize);
-					final int temp = i;
-					setSize.addActionListener(new ActionListener() {
-						@Override
-						public void actionPerformed(ActionEvent arg0) {
-							for (Question question : holder.getSelector()
-									.getQuestions())
-								question.setTextSize(temp);
-						}
-					});
-				}
 
 				final JCheckBoxMenuItem set = new JCheckBoxMenuItem(
 						"Show Test Selector");
@@ -599,7 +563,7 @@ public class MainWindow extends JPanel implements TestHolderHolder{
 				jMenuBar.add(submit);
 				submit.setVisible(false);
 				submit.setBackground(null);
-				submit.setForeground(Colors.MAJOR_BAR_TEXT);
+				submit.setForeground(Colors.MAJOR_BAR_FOREGROUND);
 				submit.setEnabled(false);
 				submit.setFont(Constants.JMENUBAR_FONT);
 				submit.setMaximumSize(new Dimension(95, Constants.JMENUBAR_HEIGHT));
@@ -619,7 +583,7 @@ public class MainWindow extends JPanel implements TestHolderHolder{
 				gradeLabel = new JLabel();
 				jMenuBar.add(gradeLabel);
 				gradeLabel.setFont(Constants.JMENUBAR_FONT);
-				gradeLabel.setForeground(Colors.MAJOR_BAR_TEXT);
+				gradeLabel.setForeground(Colors.MAJOR_BAR_FOREGROUND);
 				gradeLabel.setBackground(Colors.MAJOR_BAR_BACKGROUND);
 				
 				jMenuBar.add(Box.createGlue());
@@ -636,7 +600,7 @@ public class MainWindow extends JPanel implements TestHolderHolder{
 		public void addFileMenu(){
 			file = new JMenu(" File ");
 			file.setBackground(null);
-			file.setForeground(Colors.MAJOR_BAR_TEXT);
+			file.setForeground(Colors.MAJOR_BAR_FOREGROUND);
 			file.setFont(Constants.JMENUBAR_FONT);
 			file.setVerticalAlignment(JMenu.CENTER);
 			this.jMenuBar.add(file);
@@ -758,7 +722,7 @@ public class MainWindow extends JPanel implements TestHolderHolder{
 			JMenu edit = new JMenu(" Edit ");
 			jMenuBar.add(edit);
 			edit.setBackground(null);
-			edit.setForeground(Colors.MAJOR_BAR_TEXT);
+			edit.setForeground(Colors.MAJOR_BAR_FOREGROUND);
 			edit.setFont(Constants.JMENUBAR_FONT);
 			edit.setVerticalAlignment(JMenu.CENTER);
 			
@@ -887,36 +851,14 @@ public class MainWindow extends JPanel implements TestHolderHolder{
 			view = new JMenu(" View ");
 			jMenuBar.add(view);
 			view.setVisible(false);
-
-			JMenu setTextSize = new JMenu("Set Text Size");
-			view.add(setTextSize);
-
-			for (int i = 8; i <= 46; i += 2) {
-				JMenuItem setSize = defaultJMenuItem(i + "");
-				setTextSize.add(setSize);
-				final int temp = i;
-				setSize.addActionListener(new ActionListener() {
-					@Override
-					public void actionPerformed(ActionEvent arg0) {
-						for(Question question : holder.getSelector().getQuestions())
-							question.setTextSize(temp);
-					}
-				});
-			}
 		}
 		
 		public void addTestOptionMenu(){
 			options = new JMenu(" Test Options ");
 			jMenuBar.add(options);
 			options.setVisible(false);
-			options.addActionListener(new ActionListener() {
-				@Override
-				public void actionPerformed(ActionEvent arg0) {
-						System.out.println("Pressed");
-				}
-			});
 			
-			timeLimit = new JMenu("Time Limit");
+			timeLimit = new JMenu("Time Limit", true, true);
 			options.add(timeLimit);
 			
 			timeLimitGroup = new ButtonGroup();
@@ -978,7 +920,6 @@ public class MainWindow extends JPanel implements TestHolderHolder{
 			ActionListener listener = new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					System.out.println("Main teacher window timer triggered");
 					ftpClient.updateConnectionStatus(connectionStatus);
 				}			
 			};
@@ -995,7 +936,7 @@ public class MainWindow extends JPanel implements TestHolderHolder{
 			public CountDownTimer(){
 				timeLabel = new JLabel();
 				timeLabel.setFont(Constants.JMENUBAR_FONT);
-				timeLabel.setForeground(Colors.MAJOR_BAR_TEXT);
+				timeLabel.setForeground(Colors.MAJOR_BAR_FOREGROUND);
 				timer = new Timer(60000, new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent arg0) {
@@ -1057,10 +998,7 @@ public class MainWindow extends JPanel implements TestHolderHolder{
 			}
 		}
 		
-		class TimeLimitButton extends JRadioButtonMenuItem{
-			/**
-			 * 
-			 */
+		class TimeLimitButton extends JRadioButtonMenuItem {
 			private static final long serialVersionUID = 1L;
 			private int time;
 			TimeLimitButton(String menuText, int time){
@@ -1079,7 +1017,7 @@ public class MainWindow extends JPanel implements TestHolderHolder{
 		
 		public void addUsername() {
 			JLabel username = new JLabel(" "+name[0]+" "+name[1]+" ");
-			username.setForeground(Colors.MAJOR_BAR_TEXT);
+			username.setForeground(Colors.MAJOR_BAR_FOREGROUND);
 			username.setBackground(Colors.MAJOR_BAR_BACKGROUND);
 			username.setFont(Constants.JMENUBAR_FONT);
 			jMenuBar.add(username);
@@ -1095,21 +1033,22 @@ public class MainWindow extends JPanel implements TestHolderHolder{
 		}
 
 		public void setTimeLimit(int timeLimit){
-			if(MainWindow.isTeacher){
+			if(MainWindow.isTeacher) {
+				
 				//Resets the time limit
-				for(TimeLimitButton button : timeLimitButtons){
-					if(button.getTime() == 0){
+				for(TimeLimitButton button : timeLimitButtons) {
+					if(button.getTime() == 0) {
 						button.setSelected(true);
 					}
 				}
 				
 				//Sets the time limit
-				for(TimeLimitButton button : timeLimitButtons){
+				for(TimeLimitButton button : timeLimitButtons) {
 					if(button.getTime() == timeLimit){
 						button.setSelected(true);
 					}
 				}
-			}else{
+			} else {
 				countDownTimer.setTime(timeLimit);
 				countDownTimer.startTimer();
 			}
@@ -1119,7 +1058,7 @@ public class MainWindow extends JPanel implements TestHolderHolder{
 			return jMenuBar;
 		}
 		
-		public void addExtraMenus(){
+		public void addExtraMenus() {
 			if(!alreadyAdded){
 				grade.setEnabled(true);
 				save.setEnabled(true);
@@ -1127,7 +1066,6 @@ public class MainWindow extends JPanel implements TestHolderHolder{
 				paste.setEnabled(true);
 				cut.setEnabled(true);
 				delete.setEnabled(true);
-				view.setVisible(true);
 				options.setVisible(true);
 				publish.setEnabled(true);
 				alreadyAdded = true;
@@ -1142,7 +1080,6 @@ public class MainWindow extends JPanel implements TestHolderHolder{
 				paste.setEnabled(false);
 				cut.setEnabled(false);
 				delete.setEnabled(false);
-				view.setVisible(false);
 				options.setVisible(false);
 				publish.setEnabled(false);
 				alreadyAdded = false;

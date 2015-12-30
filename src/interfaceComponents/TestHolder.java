@@ -16,8 +16,6 @@ import java.util.Scanner;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.KeyStroke;
@@ -30,9 +28,15 @@ import questionTypes.Question;
 import utilities.Colors;
 import utilities.Constants;
 import utilities.JMenu;
+import utilities.JMenuBar;
+import utilities.JMenuItem;
 import utilities.StudentConverters;
 import utilities.TeacherConverters;
 
+/**
+ * Holds a test
+ * @author Mark Wiggans
+ */
 public class TestHolder extends JPanel{
 	private static final long serialVersionUID = 1L;
 	
@@ -41,6 +45,11 @@ public class TestHolder extends JPanel{
 	private TestHolder testHolder;
 	private TestHolderHolder window;
 	
+	/**
+	 * Creates a new TestHolder
+	 * @param window where the holder will be placed
+	 * @param ftp how the holder will get the data
+	 */
 	public TestHolder(TestHolderHolder window, FTPConnection ftp){
 		this.window = window;
 		setLayout(new BorderLayout());
@@ -59,18 +68,24 @@ public class TestHolder extends JPanel{
 		testHolder = this;
 	} 
 	
+	/**
+	 * Imports the given test into the 
+	 * @param path where the test is located on teh server
+	 * @param ftp where to get the data
+	 * @param username the current user
+	 * @throws IOException if it cannot access the server
+	 */
 	public void importTest(TreePath path, FTPConnection ftp, String username) throws IOException{
 		setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 		remove(selector);
 		selector = new ProblemSelector();
 		add(selector, BorderLayout.WEST);
 		holder.removeQuestion();
-		File file = new File("import.tst");
-		file.createNewFile();
+		File file;
 		if(MainWindow.isTeacher){
-			ftp.getFile(TeacherConverters.treePathToTempTestPath(path, username), "import.tst");
+			file = ftp.downloadFile(TeacherConverters.treePathToTempTestPath(path, username), "import.tst");
 		}else{
-			ftp.getFile(StudentConverters.treePathToString(path, username, ftp.getDataHolder()),"import.tst");
+			file = ftp.downloadFile(StudentConverters.treePathToString(path, username, ftp.getDataHolder()), "import.tst");
 		}
 		Scanner scanner = new Scanner(file);
 		while (scanner.hasNext()) {
@@ -107,14 +122,19 @@ public class TestHolder extends JPanel{
 		setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
 	}
 	
+	/**
+	 * Either grades the test or selects which answer is correct
+	 * @param path where the key is located on the server
+	 * @param ftp where the key will be searched for
+	 * @param username name of the person using the program
+	 * @throws IOException
+	 */
 	public void importKey(TreePath path, FTPConnection ftp, String username) throws IOException{
-		File file = new File("key.key");
-		file = new File("key.key");
-		file.createNewFile();
+		File file;
 		if(MainWindow.isTeacher){
-			ftp.getFile(TeacherConverters.treePathToTempKeyPath(path, username), "key.key");
+			file = ftp.downloadFile(TeacherConverters.treePathToTempKeyPath(path, username), "key.key");
 		}else{
-			ftp.getFile(StudentConverters.keyPathToKey(path, username, ftp.getDataHolder()), "key.key");
+			file = ftp.downloadFile(StudentConverters.keyPathToKey(path, username, ftp.getDataHolder()), "key.key");
 		}
 		
 		Scanner scanner = new Scanner(file);
@@ -123,9 +143,9 @@ public class TestHolder extends JPanel{
 			String[] splitString = string.split(" ");
 			try{
 				if(MainWindow.isTeacher){
-					selector.getQuestions().get(Integer.parseInt(splitString[0])).setSelected(Integer.parseInt(splitString[1]));
+					selector.getQuestions().get(Integer.parseInt(splitString[0])).setAnswerChoice(splitString[1]);
 				}else{
-					selector.getQuestions().get(Integer.parseInt(splitString[0])).setCorrectAnswer(Integer.parseInt(splitString[1]), true);
+					selector.getQuestions().get(Integer.parseInt(splitString[0])).setCorrectAnswer(splitString[1], true);
 				}
 			}catch(Exception e){
 				e.printStackTrace();
@@ -135,10 +155,15 @@ public class TestHolder extends JPanel{
 		scanner.close();
 	}
 	
+	/**
+	 * Imports the student's submission
+	 * @param path where the submission is located
+	 * @param ftp where the data comes from
+	 * @param username the username of the person using the application
+	 * @throws IOException
+	 */
 	public void importSubmission(TreePath path, FTPConnection ftp, String username) throws IOException {
-		File file = new File("key.key");
-		file.createNewFile();
-		ftp.getFile(StudentConverters.createSubmissionPath(
+		File file = ftp.downloadFile(StudentConverters.createSubmissionPath(
 				path, username, ftp.getDataHolder()), "key.key");
 		Scanner scanner = new Scanner(file);
 		while (scanner.hasNext()) {
@@ -146,9 +171,7 @@ public class TestHolder extends JPanel{
 			String[] splitString = string.split(" ");
 
 			try {
-				selector.getQuestions()
-						.get(Integer.parseInt(splitString[0]) - 1)
-						.setSelected(Integer.parseInt(splitString[1]));
+				selector.getQuestions().get(Integer.parseInt(splitString[0]) - 1).setAnswerChoice(splitString[1]);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -159,7 +182,7 @@ public class TestHolder extends JPanel{
 	
 	/**
 	 * Holds a question for the user to edit
-	 * @author Mark
+	 * @author Mark Wiggans
 	 */
 	public class ProblemHolder extends JPanel{
 		private static final long serialVersionUID = 1L;
@@ -168,6 +191,9 @@ public class TestHolder extends JPanel{
 		private Question question;
 		private JPanel tempPanel;
 
+		/**
+		 * Creates a new problem holder
+		 */
 		ProblemHolder() {
 			question = null;
 			problemHolderInit();
@@ -197,29 +223,24 @@ public class TestHolder extends JPanel{
 				
 				@Override
 				public void componentShown(ComponentEvent arg0) {
-					// TODO Auto-generated method stub
-					
+					// Do nothing
 				}
 				
 				@Override
 				public void componentResized(ComponentEvent arg0) {
-					System.out.println("resized");
 					if(question != null){
-						//question.getPanel().setPreferredSize(scrollProblemHolder.getBounds().getSize());
 						question.getPanel().setPreferredSize(new Dimension(scrollProblemHolder.getBounds().getSize().width-20, question.getPanel().getHeight()));
 					}
 				}
 				
 				@Override
 				public void componentMoved(ComponentEvent arg0) {
-					// TODO Auto-generated method stub
-					
+					// Do nothing
 				}
 				
 				@Override
 				public void componentHidden(ComponentEvent arg0) {
-					// TODO Auto-generated method stub
-					
+					// Do nothing
 				}
 			});
 			scrollProblemHolder.setBorder(BorderFactory.createEmptyBorder());
@@ -234,7 +255,6 @@ public class TestHolder extends JPanel{
 		 * @param question	the question to be seen
 		 */
 		public void setQuestion(Question question){
-			System.out.println("Question Displayed");
 			this.question = question;
 			scrollProblemHolder.setVisible(true);
 			scrollProblemHolder.setViewportView(question.getPanel());
@@ -271,13 +291,10 @@ public class TestHolder extends JPanel{
 			}
 
 			public void init() {
-				edit = new JMenu("Edit");
-				edit.setForeground(Colors.MINOR_BAR_FOREGROUND);
-				edit.setBackground(null);
+				edit = new JMenu("Edit", false, false);
 				problemHolderBar.add(edit);
-				edit.setFont(Constants.MINOR_JMENUBAR_FONT);
 				
-				JMenuItem add = new JMenuItem("Add Answer Choice");
+				JMenuItem add = new JMenuItem("Add Answer Choice", false);
 				edit.add(add);
 				add.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
@@ -289,7 +306,7 @@ public class TestHolder extends JPanel{
 					}
 				});
 				
-				JMenuItem remove = new JMenuItem("Remove Answer Choice");
+				JMenuItem remove = new JMenuItem("Remove Answer Choice", false);
 				edit.add(remove);
 				remove.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
@@ -314,7 +331,7 @@ public class TestHolder extends JPanel{
 	
 	/**
 	 * A JPanel that allows the user to choose a question to edit 
-	 * @author Mark
+	 * @author Mark Wiggans
 	 */
 	public class ProblemSelector extends JPanel {
 		private static final long serialVersionUID = 1L;
@@ -323,6 +340,9 @@ public class TestHolder extends JPanel{
 		private ArrayList<Question> questions;
 		private ProblemMenuBar probBar;
 
+		/**
+		 * Creates a new ProblemSelector object
+		 */
 		ProblemSelector() {
 			questions = new ArrayList<Question>();
 			this.init();
@@ -331,6 +351,10 @@ public class TestHolder extends JPanel{
 			}
 		}
 		
+		/**
+		 * Checks if any changes have been made
+		 * @return true if changes have been made. False if not
+		 */
 		public boolean anyChanges(){
 			for(Question question : questions){
 				if(question.changesMade()){
@@ -344,6 +368,9 @@ public class TestHolder extends JPanel{
 			return questions;
 		}
 
+		/**
+		 * Creates a new multiple choice question
+		 */
 		private void newMultCh() {
 			MultipleChoiceQuestion question = new MultipleChoiceQuestion();
 			questions.add(question);
@@ -353,6 +380,10 @@ public class TestHolder extends JPanel{
 			revalidate();
 		}
 		
+		/**
+		 * Creates a new multiple choice question with the given data
+		 * @param questionData data to put into the question
+		 */
 		public void newMultCh(ArrayList<String> questionData) {
 			MultipleChoiceQuestion question = new MultipleChoiceQuestion(questionData);
 			questions.add(question);
@@ -362,6 +393,9 @@ public class TestHolder extends JPanel{
 			revalidate();
 		}
 
+		/**
+		 * Initializes the 
+		 */
 		private void init() {
 			setLayout(new BorderLayout());
 			setPreferredSize(new Dimension(250, 250));
@@ -379,6 +413,9 @@ public class TestHolder extends JPanel{
 			selectorScroll.setBorder(BorderFactory.createEmptyBorder());
 		}
 
+		/**
+		 * Resets all of the question numbers
+		 */
 		public void reassignProblemNumbers() {
 			for (int i = 0; i < questions.size(); i++) {
 				questions.get(i).setQuestionNumber(i + 1);
@@ -386,6 +423,10 @@ public class TestHolder extends JPanel{
 			multChoicePanel.setPreferredSize(new Dimension(10, (questions.size() * (Constants.PROBLEM_SELECTOR_HEIGHT+5)) - 5));
 		}
 
+		/**
+		 * Sets which question is selected
+		 * @param questionNumber the number of the question to be selected
+		 */
 		public void setSelected(int questionNumber) {
 			for (int i = 0; i < questions.size(); i++) {
 				if (questionNumber == questions.get(i).getQuestionNumber()) {
@@ -399,6 +440,9 @@ public class TestHolder extends JPanel{
 			this.repaint();
 		}
 		
+		/**
+		 * Refreshes the text in the number holders
+		 */
 		public void refreshNumberHolderText(){
 			for(Question question : questions) {
 				question.getNumberHolder().refreshText();
@@ -406,12 +450,20 @@ public class TestHolder extends JPanel{
 			this.repaint();
 		}
 
+		/**
+		 * Removes the given question from the test
+		 * @param question the question to remove
+		 */
 		public void removeQuestion(Question question) {
 			questions.remove(question);
 			multChoicePanel.remove(question.getNumberHolder().getPanel());
 			reassignProblemNumbers();
 		}
 		
+		/**
+		 * The menu bar
+		 * @author Mark Wiggans
+		 */
 		public class ProblemMenuBar {
 			private JMenuBar problemBar;
 			JMenu newItem;
@@ -424,9 +476,9 @@ public class TestHolder extends JPanel{
 			}
 
 			private void loadProblemBar() {
-				newItem = new JMenu("New");
+				newItem = new JMenu("New", false, false);
 				this.problemBar.add(newItem);
-				JMenuItem multCh = new JMenuItem("Multiple Choice Question");
+				JMenuItem multCh = new JMenuItem("Multiple Choice Question", false);
 				multCh.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_M, KeyEvent.CTRL_MASK));
 				newItem.add(multCh);
 				multCh.addActionListener(new ActionListener() {
@@ -436,7 +488,7 @@ public class TestHolder extends JPanel{
 					}
 				});
 				
-				JMenuItem trueFalse = new JMenuItem("True/False Question");
+				JMenuItem trueFalse = new JMenuItem("True/False Question", false);
 				trueFalse.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_T, KeyEvent.CTRL_MASK));
 				newItem.add(trueFalse);
 				trueFalse.addActionListener(new ActionListener() {
@@ -452,21 +504,36 @@ public class TestHolder extends JPanel{
 				trueFalse.setForeground(Colors.MINOR_BAR_FOREGROUND);
 			}
 
+			/**
+			 * Gets the bar
+			 * @return the bar
+			 */
 			public JMenuBar getBar() {
 				return this.problemBar;
 			}
 		}
 
+		/**
+		 * Sets all the questions as editable
+		 * @param paneEditable if the pane should be editable
+		 * @param radioEditable if the radio buttons should be editable
+		 */
 		public void setEditable(boolean paneEditable, boolean radioEditable) {
 			for(Question question : questions){
 				question.setEditable(paneEditable, radioEditable);
 			}
 		}
 		
+		/**
+		 * Removes the ability to add questions
+		 */
 		public void removeAdd(){
 			probBar.newItem.setVisible(false);
 		}
 
+		/**
+		 * Marks all the questions as saved
+		 */
 		public void saved() {
 			for(Question question : questions){
 				question.saved();
@@ -474,10 +541,18 @@ public class TestHolder extends JPanel{
 		}
 	}
 
+	/**
+	 * Gets the selector
+	 * @return the selector
+	 */
 	public ProblemSelector getSelector(){
 		return selector;
 	}
 	
+	/**
+	 * Gets the holder
+	 * @return the holder
+	 */
 	public ProblemHolder getHolder(){
 		return holder;
 	}

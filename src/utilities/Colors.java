@@ -1,7 +1,10 @@
 package utilities;
 import java.awt.Color;
 
-
+/**
+ * Defines all of the colors that are used in the application
+ * @author Mark Wiggans
+ */
 public class Colors {
 	
 	public final static Color QUESTION_HEADER_BACKGROUND = new Color(189, 213, 34);
@@ -11,6 +14,7 @@ public class Colors {
 	public final static Color ANSWER_BACKGROUND = new Color(246, 250, 217);
 	
 	public static final Color MAJOR_BAR_BACKGROUND = new Color(95, 95, 95);
+	public final static Color MAJOR_BAR_FOREGROUND = Color.WHITE;
 	
 	public static final Color QUESTION_NUMBER_FOREGROUND = Color.BLACK;
 	
@@ -33,7 +37,6 @@ public class Colors {
 	public final static Color MINOR_BAR_FOREGROUND = Color.BLACK;
 	public final static Color GRADER_SEPERATOR_LINE = Color.LIGHT_GRAY;
 	
-	public final static Color MAJOR_BAR_TEXT = Color.WHITE;
 	public final static Color TRANSPARENT = new Color(0, 0, 0, 0);
 	public static final Color FRAME_BACKGROUND = Color.BLACK;
 }

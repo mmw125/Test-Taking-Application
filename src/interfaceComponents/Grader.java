@@ -96,6 +96,9 @@ public class Grader implements TestHolderHolder{
 		return outputArray;
 	}
 	
+	/**
+	 * Creates and adds the menu bar
+	 */
 	private void createAndAddMenuBar(){
 		JMenuBar bar = new JMenuBar();
 		bar.setSize(1, Constants.JMENUBAR_HEIGHT);
@@ -117,9 +120,12 @@ public class Grader implements TestHolderHolder{
 				}
 			}
 		});
-		System.out.println("Added MenuBar");
 	}
 	
+	/**
+	 * Generates the csv file in the given file
+	 * @param f the file to put it in
+	 */
 	private void generateCsvFile(File f){
 		try
 		{
@@ -133,7 +139,6 @@ public class Grader implements TestHolderHolder{
 		    }	 
 		    writer.flush();
 		    writer.close();
-		    System.out.println("Saved to "+f.getAbsolutePath());
 		}
 		catch(IOException e)
 		{
@@ -186,6 +191,11 @@ public class Grader implements TestHolderHolder{
 		createAndAddMenuBar();
 	}
 	
+	/**
+	 * Imports the given test
+	 * @param testPath where the test is on the server
+	 * @throws IOException
+	 */
 	public void importTest(TreePath testPath) throws IOException {
 		if(holder != null){
 			background.remove(holder);
@@ -203,17 +213,14 @@ public class Grader implements TestHolderHolder{
 		holder.getHolder().removeEditJMenu();
 		holder.getSelector().refreshNumberHolderText();
 		frame.revalidate();
-		System.out.println("Imported test");
 	}
 	
 	/**
 	 * Grades the tests
-	 * @throws IOException
+	 * @throws IOException if its not connected to the server
 	 */
 	private void gradeTests() throws IOException{
-		File file = new File("key.key");
-		file.createNewFile();
-		ftp.getFile(TeacherConverters.treePathToKeyPath(path, username), "key.key");
+		File file = ftp.downloadFile(TeacherConverters.treePathToKeyPath(path, username), "key.key");
 		Scanner scanner = new Scanner(file);
 		while (scanner.hasNext()) {
 			String string = scanner.nextLine();
@@ -239,10 +246,7 @@ public class Grader implements TestHolderHolder{
 		for(Student student : students){
 			GradedStudent gradedStudent = new GradedStudent(student, answers.size());
 			String subPath = TeacherConverters.treePathToString(path, username)+"/"+student.getUsername()+".sub";
-			System.out.println(subPath);
-			File studentSub = new File("submission.sub");
-			studentSub.createNewFile();
-			ftp.getFile(subPath, "submission.sub");
+			File studentSub = ftp.downloadFile(subPath, "submission.sub");
 			scanner = new Scanner(studentSub);
 			while (scanner.hasNext()) {
 				String string = scanner.nextLine();
@@ -254,10 +258,11 @@ public class Grader implements TestHolderHolder{
 			display.addGradedStudent(gradedStudent, answers.size());
 			gradedStudents.add(gradedStudent);
 		}
+		
 		for(int questionInt = 0; questionInt < studentResponses.length; questionInt++){
 			for(int answerInt = 0; answerInt < holder.getSelector().getQuestions().get(questionInt).getAnswerChoices().size(); answerInt++){
 				int percentage = (int)((float)studentResponses[questionInt][answerInt]*100.0f / (float)students.size());
-				holder.getSelector().getQuestions().get(questionInt).getAnswers().get(answerInt).setPercentageGotRight(percentage+"%");;
+				holder.getSelector().getQuestions().get(questionInt).setPercentageGotRight(answerInt, percentage+"%");;
 			}
 		}
 		
@@ -269,14 +274,13 @@ public class Grader implements TestHolderHolder{
 			totalGrade /= (float)display.getGradedStudents().size();
 			display.getAverageScore().setText((int)totalGrade+"%");
 		}
-		System.out.println("Graded Tests");
 		frame.revalidate();
 	}
 	
 	/**
 	 * Displays all of the student's grades. Partially 
 	 * duplicates some of the code from testSelector
-	 * @author Mark
+	 * @author Mark Wiggans
 	 */
 	public class GradeDisplay extends JPanel {
 		private static final long serialVersionUID = 1L;
@@ -316,7 +320,6 @@ public class Grader implements TestHolderHolder{
 			pathLabelContainer.setPreferredSize(new Dimension(250, 30));
 			pathLabelContainer.setBackground(Colors.MINOR_BAR_BACKGROUND);
 			pathLabelContainer.setLayout(new BorderLayout());
-			//northContainer.add(pathLabelContainer, BorderLayout.CENTER);
 			add(pathLabelContainer, BorderLayout.NORTH);
 			
 			pathLabel = new JLabel("Please Select A Test");
@@ -374,10 +377,6 @@ public class Grader implements TestHolderHolder{
 			this.usernameLabel = new JLabel(" Average Grade");
 			initHolder();
 		}
-		
-//		public void setTextColor(Color color) {
-//			gradeLabel.setForeground(color);
-//		}
 
 		public void initHolder(){
 			teacherNumberPanel = new JPanel(new BorderLayout());
@@ -474,7 +473,6 @@ public class Grader implements TestHolderHolder{
 					noResponses = false;
 				}
 			}
-			System.out.println("Number of correct Answers "+correctAnswers);
 			float grade = (float)correctAnswers * 100.0f / (float)responses.length;
 			holder.setText((int)grade + "%");
 			this.grade = (int)grade;
@@ -542,13 +540,13 @@ public class Grader implements TestHolderHolder{
 		}
 	}
 	
+	@Override
 	public void setTimer(int time){
-		
+		// Not necessary as grading doesnt have a time limit
 	}
 
 	@Override
 	public void setAbleToOpenOther(boolean able) {
-		// TODO Auto-generated method stub
-		
+		// Not necessary as teachers will be able to open other
 	}
 }

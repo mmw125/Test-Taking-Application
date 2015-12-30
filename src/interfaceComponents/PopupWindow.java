@@ -10,22 +10,32 @@ import javax.swing.JPanel;
 import utilities.Colors;
 import utilities.Constants;
 
-
+/**
+ * Popup window that holds a test so that teachers can 
+ * allow users can refer back to old assignments when taking assingments
+ * @author Mark Wiggans
+ */
 public class PopupWindow implements TestHolderHolder{
 	private JFrame frame;
-	public PopupWindow(){
-		frame = new JFrame();
+	private TestHolder holder;
+	
+	public PopupWindow() {
 		init();
 	}
 	
-	public PopupWindow(JPanel panel){
+	/**
+	 * Creates a new Popup window with the given panel
+	 * @param panel JPanel to create popup with
+	 */
+	public PopupWindow(TestHolder holder){
 		this();
-		setPanel(panel);
+		this.holder = holder;
+		setHolder(holder);
 	}
+	
 	
 	public void init(){
 		frame = new JFrame();
-		System.out.println("Created Popup Window");
 		ImageIcon icon = new ImageIcon(Constants.LOGO_PATH);
 		frame.setIconImage(icon.getImage());
 		frame.setMinimumSize(new Dimension(1200, 680));
@@ -37,19 +47,25 @@ public class PopupWindow implements TestHolderHolder{
 		frame.getContentPane().setBackground(Colors.FRAME_BACKGROUND);
 	}
 	
-	public void setPanel(JPanel panel){
+	/**
+	 * Sets the panel inside of the frame
+	 * @param panel new panel
+	 */
+	public void setHolder(JPanel panel){
 		frame.getContentPane().add(panel, BorderLayout.CENTER);
 	}
 
 	@Override
 	public void setTimer(int time) {
-		// TODO Auto-generated method stub
-		
+		// Not needed as popups are not timed
 	}
 
 	@Override
 	public void setAbleToOpenOther(boolean able) {
-		// TODO Auto-generated method stub
-		
+		// Not needed as popups 
+	}
+	
+	public TestHolder getTestHolder() {
+		return holder;
 	}
 }

@@ -24,6 +24,10 @@ import utilities.Colors;
 import ftp.DataHolder.Student;
 import ftp.FTPConnection;
 
+/**
+ * The login window
+ * @author Andrew Storms
+ */
 public class Login extends JPanel {
 	private static final long serialVersionUID = 1L;
 	private JLabel usernameLabel;
@@ -37,11 +41,15 @@ public class Login extends JPanel {
 	private JLabel pleaseLogin;
 	private JLabel userSaved;
 	private JButton loginButton;
-	private JButton extraButton;
 	private FTPConnection ftpConnetion;
 	private LoginFrame loginFrame;
 	private JLabel connectionStatus;
+	private Timer connectedTimer;
 
+	/**
+	 * Creates a new Login object and puts it inside of the given frame
+	 * @param loginFrame the frame to put this inside of
+	 */
 	public Login(LoginFrame loginFrame) {
 
 		this.loginFrame = loginFrame;
@@ -99,12 +107,11 @@ public class Login extends JPanel {
 		passwordField.setLayout(null);
 		passwordField.setBounds(passwordFieldPositionx, passwordFieldPositiony, 200, 40);
 		passwordField.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
+		//Allows you to hit enter to press the login button
 		passwordField.addActionListener(new ActionListener() {
-			
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				loginButton.doClick();
-				
 			}
 		});
 		add(passwordField);
@@ -128,7 +135,6 @@ public class Login extends JPanel {
 		pleaseLogin.setForeground(Color.WHITE);
 		pleaseLogin.setLayout(null);
 		pleaseLogin.setBounds(pleaseLoginPositionx, 40, 600, 40);
-		//add(pleaseLogin);
 		
 		loginSuccessful = new JLabel("");
 		loginSuccessful.setFont (loginSuccessful.getFont ().deriveFont (14.0f));
@@ -151,7 +157,6 @@ public class Login extends JPanel {
 		userSaved.setBounds(userSavedPositionx, 190, 600, 40);
 		add(userSaved);
 		
-		//getRootPane().setDefaultButton(loginButton);
 		loginButton = new JButton("Login");
 		loginButton.setFont (loginButton.getFont ().deriveFont (24.0f));
 		loginButton.setLayout(null);
@@ -159,14 +164,6 @@ public class Login extends JPanel {
 		ActionListener LoginButtonListener = new LoginButtonListener();
 		loginButton.addActionListener(LoginButtonListener);
 		add(loginButton);
-		
-		extraButton = new JButton("Testing Login");
-		extraButton.setFont (extraButton.getFont ().deriveFont (24.0f));
-		extraButton.setLayout(null);
-		extraButton.setBounds(loginButtonPositionx, passwordLabelPositiony+180, loginButtonWidth, 40);
-		ActionListener PrintUsersButtonListener = new PrintUsersButtonListener();
-		extraButton.addActionListener(PrintUsersButtonListener);
-		//add(extraButton);
 
 		ftpConnetion = new FTPConnection();
 		
@@ -183,10 +180,10 @@ public class Login extends JPanel {
 			}			
 		};
 		updateConnectionStatus();
-		Timer timer = new Timer(5000, listener);
+		connectedTimer = new Timer(5000, listener);
 		//Set update to run every 5 seconds
-		timer.setDelay(5000);
-		timer.start();
+		connectedTimer.setDelay(5000);
+		connectedTimer.start();
 		
 		setVisible(true);
 
@@ -201,14 +198,10 @@ public class Login extends JPanel {
 			}
 
 			@Override
-			public void keyReleased(KeyEvent e) {
-
-			}
+			public void keyReleased(KeyEvent e) { }
 
 			@Override
-			public void keyPressed(KeyEvent arg0) {
-
-			}
+			public void keyPressed(KeyEvent arg0) { }
 		});
 	}
 	
@@ -235,35 +228,30 @@ public class Login extends JPanel {
 		public void actionPerformed(ActionEvent e) {
 			if (e.getSource() == loginButton) {
 				setCursor (Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-//				ftpConnetion = new FTPConnection();
 				if (ftpConnetion.isConnected()) {
 					try {
 						if (ftpConnetion.getDataHolder().correctLoginForStudent(usernameField.getText(), new String(passwordField.getPassword()))) {
 							Student student = ftpConnetion.getDataHolder().getStudentFromUsername(usernameField.getText());
 							ftpConnetion.cacheStudentTree(usernameField.getText(), student.getFirstName() + " " + student.getLastName());
 							MainWindow window = new MainWindow(usernameField.getText(), ftpConnetion, false);
-//							MainStudentWindow window = new MainStudentWindow(usernameField.getText(), ftpConnetion);
 							loginFrame.setVisible(false);
 							window.setVisible(true);
-							//TestSelector selector = new TestSelector(ftpConnetion, usernameField.getText());
+							connectedTimer.stop();
 							setVisible(false);
 						} else if (ftpConnetion.getDataHolder().correctLoginForTeacher(usernameField.getText(),new String(passwordField.getPassword()))) {
 							ftpConnetion.cacheHeirarchy(usernameField.getText() + "/", usernameField.getText());
 							MainWindow window = new MainWindow(usernameField.getText(), ftpConnetion, true);
-//							MainTeacherWindow teacherWindow = new MainTeacherWindow(usernameField.getText(), ftpConnetion);
 							window.getFrame().setVisible(true);
 							loginFrame.setVisible(false);
 							setVisible(false);
+							connectedTimer.stop();
 						} else {
-							System.out.println("No exception");
 							passwordField.setText("");
-							
 							JOptionPane.showMessageDialog(loginFrame, "Incorrect Username or Password");
 						}
 					} catch (Exception ex) {
 						ex.printStackTrace();
 						passwordField.setText("");
-						//					JOptionPane.showMessageDialog(loginFrame, "Something went wrong. Please try again later");
 					}
 				}else{
 					JOptionPane.showMessageDialog(null, "Could not connect to the server");
@@ -273,82 +261,7 @@ public class Login extends JPanel {
 		} // End actionPerformed
 	} // End LoginButtonListener
 
-//	public class CreateUserButtonListener implements ActionListener {
-//		public void actionPerformed(ActionEvent e) {
-//			if (e.getSource() == createUserButton) {
-//				if (createCount == 0) {
-//					enterUsername_Password1.setText("Please enter a username and password for the new user.");
-//					enterUsername_Password2.setText("When finished, click Save User to store new user.");
-//					createUserButton.setText("Save User");
-//					usernameField.setText("");
-//					passwordField.setText("");
-//					loginUnsuccessful.setText("");
-//					loginSuccessful.setText("");
-//					pleaseLogin.setText("");
-//					userSaved.setText("");
-//
-//					createCount++;
-//				} else if (createCount == 1) {
-//					users.add(usernameField.getText());
-//					try {
-//						String hashedAndSaltedPassword = PasswordHash.createHash(passwordField.getPassword());
-//						System.out.println(hashedAndSaltedPassword);
-//						passwords.add(hashedAndSaltedPassword);
-//					} catch (NoSuchAlgorithmException e2) {
-//						e2.printStackTrace();
-//					} catch (InvalidKeySpecException e2) {
-//						e2.printStackTrace();
-//					}
-//					// passwords.add(passwordField.getText());
-//
-//					createUserButton.setText("Create New User");
-//					usernameField.setText("");
-//					passwordField.setText("");
-//					enterUsername_Password1.setText("");
-//					enterUsername_Password2.setText("");
-//					loginUnsuccessful.setText("");
-//					pleaseLogin.setText("Please log in below");
-//					userSaved.setText("User Saved");
-//
-//					createCount = 0;
-//
-//					try {
-//						if (!usersTeachers_File.exists()) {
-//							usersTeachers_File.createNewFile();
-//						}
-//						ftpConnetion.download(users_Teachers);
-//
-//						PrintWriter pw = new PrintWriter(usersTeachers_File);
-//
-//						// for (int i = 0; i < users.size(); i++)
-//						for (int i = 0; i < passwords.size(); i++) {
-//							pw.write(users.get(i) + " " + passwords.get(i)
-//									+ "\n");
-//						}
-//
-//						pw.close();
-//
-//						ftpConnetion.upload(users_Teachers);
-//
-//					} catch (IOException e1) {
-//						e1.printStackTrace();
-//					}
-//					System.out.println("Users Printed");
-//				}
-//			} // End if source = CreateNewUserButton
-//		} // End actionPerformed
-//	} // End CreateUserButtonListener
-
-	public class PrintUsersButtonListener implements ActionListener {
-		public void actionPerformed(ActionEvent e) {
-			usernameField.setText("mark");
-			passwordField.setText("wiggans");
-			loginButton.doClick();
-		}
-	}
-
-	public static void main(String[] args) 
-	{
+	public static void main(String[] args) {
 		System.setProperty("java.net.preferIPv4Stack" , "true");
 		LoginFrame loginFrame = new LoginFrame("Login Screen");
 		loginFrame.setVisible(true);

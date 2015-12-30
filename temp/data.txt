@@ -1,0 +1,15 @@
+// mark wiggans
+TEACHER~mark~Mark~Wiggans~1000:650f2bbe0cf94a9b174a256e3d304105546435ecf0fe43d2:f1827cdf98b6c13eb673c939c9a872ced41c04df5ba45666
+// test testing
+TEACHER~test~Test~Testing~1000:a358620899dbbf386b754ffe554fc040f8bdbbba7600e091:f228b8b0c4e248691b959a9428a8b3915c1b364b0d62ca46
+// user user
+STUDENT~user~First~Last~1000:ae75729eac947a4fc2eddc75c1926aa897f81f6b0847e25a:501e248a996c2391c757261d41bd0c7f4d70f404558d7f7b
+// andrew password
+STUDENT~andrew~Mr.~A~1000:b65e2beb08709f555f6cd3c09a72d6dc0a19d40d373ef196:08ed0e12b2b35cd536964714d586d14c06f2fee300f3f95d
+// markUser wiggans
+STUDENT~markUser~Hey~IJustMetYou~1000:650f2bbe0cf94a9b174a256e3d304105546435ecf0fe43d2:f1827cdf98b6c13eb673c939c9a872ced41c04df5ba45666
+CLASS~mark~Algebra~user~andrew
+CLASS~mark~Algebra 2~andrew
+CLASS~mark~Geometry~user~andrew
+CLASS~test~History~andrew
+CLASS~test~World Regions
